@@ -1,7 +1,0 @@
-name = "pml2-telemetry"
-main = "src/worker.js"
-compatibility_date = "2026-10-03"
-
-[[analytics_engine_datasets]]
-binding = "PML2_TELEMETRY"
-dataset = "pml2_telemetry"
