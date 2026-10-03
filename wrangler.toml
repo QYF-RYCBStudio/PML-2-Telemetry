@@ -5,9 +5,3 @@ compatibility_date = "2026-10-03"
 [[analytics_engine_datasets]]
 binding = "PML2_TELEMETRY"
 dataset = "pml2_telemetry"
-
-[[routes]]
-pattern = "telemetry.rycb.tech"
-custom_domain = true
-
-workers_dev = false
