@@ -52,7 +52,7 @@ h1{margin:0;font-size:30px;letter-spacing:-.03em}
 </section>
 <script>
 var fmt=function(n){return new Intl.NumberFormat().format(n||0);};
-var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});};
+var esc=function(s){return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}).replace(/"/g,"&quot;");};
 var renderRows=function(el,rows){
   var max=Math.max.apply(null,[1].concat(rows.map(function(x){return Number(x.count)||0;})));
   if(!rows.length){el.innerHTML="<div class='status'>No data yet</div>";return;}
