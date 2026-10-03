@@ -9,6 +9,9 @@
       "dataset": "pml2_telemetry"
     }
   ],
+  "analytics": {
+    "binding": "ANALYTICS_SQL"
+  },
   "observability": {
     "logs": {
       "enabled": true,
