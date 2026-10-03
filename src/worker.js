@@ -169,12 +169,12 @@ export default {
         const start30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
         const [dau, wau, mau, versions, platforms, daily] = await Promise.all([
-          query(env, `SELECT uniqExact(index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start`, { start: start24h }),
-          query(env, `SELECT uniqExact(index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start`, { start: start7d }),
-          query(env, `SELECT uniqExact(index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start`, { start: start30d }),
-          query(env, `SELECT blob2 AS name, uniqExact(index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start GROUP BY blob2 ORDER BY count DESC LIMIT 12`, { start: start30d }),
-          query(env, `SELECT blob3 AS name, uniqExact(index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start GROUP BY blob3 ORDER BY count DESC LIMIT 8`, { start: start30d }),
-          query(env, `SELECT toDate(timestamp) AS date, uniqExact(index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start GROUP BY date ORDER BY date ASC`, { start: start30d }),
+          query(env, `SELECT COUNT(DISTINCT index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start`, { start: start24h }),
+          query(env, `SELECT COUNT(DISTINCT index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start`, { start: start7d }),
+          query(env, `SELECT COUNT(DISTINCT index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start`, { start: start30d }),
+          query(env, `SELECT blob2 AS name, COUNT(DISTINCT index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start GROUP BY blob2 ORDER BY count DESC LIMIT 12`, { start: start30d }),
+          query(env, `SELECT blob3 AS name, COUNT(DISTINCT index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start GROUP BY blob3 ORDER BY count DESC LIMIT 8`, { start: start30d }),
+          query(env, `SELECT toStartOfDay(timestamp) AS date, COUNT(DISTINCT index1) AS count FROM events.analyticsEngine."pml2_telemetry" WHERE timestamp >= $start GROUP BY date ORDER BY date ASC`, { start: start30d }),
         ]);
 
         return json({
