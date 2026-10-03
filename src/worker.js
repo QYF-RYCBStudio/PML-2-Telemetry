@@ -41,9 +41,9 @@ h1{margin:0;font-size:30px;letter-spacing:-.03em}
 <main>
 <header><div><h1>PML 2 Telemetry</h1><div class="sub">Anonymous active-installation analytics</div></div><div id="status" class="status">Loading…</div></header>
 <section class="grid">
-<div class="card"><div class="label">DAU</div><div id="dau" class="value">—</div></div>
-<div class="card"><div class="label">WAU</div><div id="wau" class="value">—</div></div>
-<div class="card"><div class="label">MAU</div><div id="mau" class="value">—</div></div>
+<div class="card"><div class="label">DAU · rolling 24h</div><div id="dau" class="value">—</div></div>
+<div class="card"><div class="label">WAU · rolling 7d</div><div id="wau" class="value">—</div></div>
+<div class="card"><div class="label">MAU · rolling 30d</div><div id="mau" class="value">—</div></div>
 </section>
 <section class="panel"><h2>Daily active installations · 30 days</h2><div id="days" class="day"></div><div class="legend"><span id="from"></span><span>Today</span></div></section>
 <section class="two">
@@ -51,23 +51,40 @@ h1{margin:0;font-size:30px;letter-spacing:-.03em}
 <div class="panel"><h2>Platforms · 30 days</h2><div id="platforms"></div></div>
 </section>
 <script>
-const fmt=n=>new Intl.NumberFormat().format(n||0);
-const renderRows=(el,rows)=>{const max=Math.max(1,...rows.map(x=>Number(x.count)||0));el.innerHTML=rows.length?rows.map(x=>`<div class="row"><span>${esc(x.name)}</span><div class="bar"><div class="fill" style="width:${(Number(x.count)/max*100).toFixed(1)}%"></div></div><strong>${fmt(x.count)}</strong></div>`).join(""):"<div class='status'>No data yet</div>"};
-const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+var fmt=function(n){return new Intl.NumberFormat().format(n||0);};
+var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});};
+var renderRows=function(el,rows){
+  var max=Math.max.apply(null,[1].concat(rows.map(function(x){return Number(x.count)||0;})));
+  if(!rows.length){el.innerHTML="<div class='status'>No data yet</div>";return;}
+  el.innerHTML=rows.map(function(x){
+    var width=(Number(x.count)/max*100).toFixed(1);
+    return "<div class='row'><span>"+esc(x.name)+"</span><div class='bar'><div class='fill' style='width:"+width+"%'></div></div><strong>"+fmt(x.count)+"</strong></div>";
+  }).join("");
+};
 async function load(){
  try{
-  const r=await fetch("/api/dashboard",{cache:"no-store"});
+  var r=await fetch("/api/dashboard",{cache:"no-store"});
   if(!r.ok) throw new Error("HTTP "+r.status);
-  const d=await r.json();
-  dau.textContent=fmt(d.dau); wau.textContent=fmt(d.wau); mau.textContent=fmt(d.mau);
-  renderRows(versions,d.versions); renderRows(platforms,d.platforms);
-  const vals=d.daily.map(x=>Number(x.count)||0), max=Math.max(1,...vals);
-  days.innerHTML=d.daily.map(x=>`<i title="${x.date}: ${fmt(x.count)}" style="height:${Math.max(2,Number(x.count)/max*100)}%"></i>`).join("");
-  from.textContent=d.daily[0]?.date||"";
-  status.textContent="Updated "+new Date().toLocaleTimeString();
- }catch(e){status.textContent=e.message;status.className="status error"}
+  var d=await r.json();
+  document.getElementById("dau").textContent=fmt(d.dau);
+  document.getElementById("wau").textContent=fmt(d.wau);
+  document.getElementById("mau").textContent=fmt(d.mau);
+  renderRows(document.getElementById("versions"),d.versions);
+  renderRows(document.getElementById("platforms"),d.platforms);
+  var vals=d.daily.map(function(x){return Number(x.count)||0;});
+  var max=Math.max.apply(null,[1].concat(vals));
+  document.getElementById("days").innerHTML=d.daily.map(function(x){
+    var h=Math.max(2,Number(x.count)/max*100);
+    return "<i title='"+esc(x.date)+": "+fmt(x.count)+"' style='height:"+h+"%'></i>";
+  }).join("");
+  document.getElementById("from").textContent=d.daily.length?d.daily[0].date:"";
+  document.getElementById("status").textContent="Updated "+new Date().toLocaleTimeString();
+ }catch(e){
+  document.getElementById("status").textContent=e.message;
+  document.getElementById("status").className="status error";
+ }
 }
-load(); setInterval(load,60000);
+load();setInterval(load,60000);
 </script>
 </main>
 </body>
@@ -98,6 +115,7 @@ function isAuthorized(request, env) {
   if (!header.startsWith("Basic ") || !env.DASHBOARD_USER || !env.DASHBOARD_PASSWORD) {
     return false;
   }
+
   try {
     const decoded = atob(header.slice(6));
     const separator = decoded.indexOf(":");
@@ -132,6 +150,7 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/dashboard") {
       if (!isAuthorized(request, env)) return unauthorized();
+
       return new Response(DASHBOARD_HTML, {
         headers: {
           "Content-Type": "text/html; charset=utf-8",
